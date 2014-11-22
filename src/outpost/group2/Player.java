@@ -69,7 +69,7 @@ public class Player extends outpost.sim.Player {
     			int defensiveVal = board.calculateDefensiveScore(outpost, testPos, id, homespace);
     			int resourceVal = board.getResourceVal(testPos);
     			int offensiveVal = board.calculateOffensiveScore(outpost, testPos, id, influenceDist);
-    			double currentScore = 10 * resourceVal + defensiveVal + (currentTick/T) * offensiveVal;
+    			double currentScore = 5 * resourceVal + defensiveVal + (currentTick/T) * offensiveVal;
     			if (currentScore > bestScore) {
     				bestScore = currentScore;
     				bestPair = testPos;
@@ -109,7 +109,7 @@ public class Player extends outpost.sim.Player {
     
     // For now, we delete the newest outpost. Future work: 
     public int delete(ArrayList<ArrayList<Pair>> king_outpostlist, Point[] gridin) {
-    	int del = king_outpostlist.get(id).size();
+    	int del = king_outpostlist.get(id).size() - 1;
     	return del;
     }
 }

@@ -54,6 +54,7 @@ public class GameBoard {
 		}
 	}
 	
+	// Returns a number between 0 and 200, where 200 is the best defensive score, and 0 is the worst.
 	public int calculateDefensiveScore(Outpost movingPost, Pair testPos, int playerId, Pair homespace) {
 		ArrayList<Outpost> playerOutposts = outposts.get(playerId);
 		int MAX_DIST = 200;
@@ -66,7 +67,7 @@ public class GameBoard {
 				combinedDistances += (MAX_DIST - dist);
 		}
 		combinedDistances += MAX_DIST - manhattanDist(homespace, testPos);
-		return combinedDistances;
+		return (int) combinedDistances/playerOutposts.size();
 	}
 	
 	public int calculateOffensiveScore(Outpost movingPost, Pair testPos, int playerId, int influenceDist) {
