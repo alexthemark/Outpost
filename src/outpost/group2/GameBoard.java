@@ -9,17 +9,18 @@ public class GameBoard {
 	private static final int BOARD_SIZE = 100;
 	GridCell[][] grid = new GridCell[BOARD_SIZE][BOARD_SIZE];
 	// this list is first indexed by the player's id, and then gives their list of outposts.
-	ArrayList<ArrayList<Pair>> outposts;
+	ArrayList<ArrayList<Outpost>> outposts;
 	
-	public GameBoard(Point[] oneDimensionalGrid) {
+	public GameBoard(Point[] oneDimensionalGrid, ArrayList<ArrayList<Outpost>> outposts) {
 		for (int i = 0; i < BOARD_SIZE; i++) {
 			for (int j = 0; j < BOARD_SIZE; j++) {
 				grid[i][j] = new GridCell(oneDimensionalGrid[i*BOARD_SIZE+j]);
 			}
 		}
+		this.outposts = outposts;
 	}
 	
-	public void calculateResourceValues(int influenceDistance, int waterMultiplier, int landMultiplier) {
+	public void calculateResourceValues(int id, int influenceDistance, int waterMultiplier, int landMultiplier) {
 		GridCell currentCell;
 		for (int i = 0; i < BOARD_SIZE; i++) {
 			for (int j = 0; j < BOARD_SIZE; j++) {
@@ -27,9 +28,10 @@ public class GameBoard {
 				if (validCellForMoving(currentCell)) {
 					ArrayList<GridCell> cellsUnderInfluence = getInfluencedCells(currentCell, influenceDistance);
 					for (GridCell cell : cellsUnderInfluence) {
-						if (cell.hasWater)
+						// We don't count a cell as useful if we already own it. 
+						if (cell.hasWater && cell.owner != id)
 							currentCell.value += waterMultiplier;
-						else
+						else if (cell.owner != id)
 							currentCell.value += landMultiplier;
 					}
 				}
@@ -37,9 +39,9 @@ public class GameBoard {
 		}
 	}
 	
-	public void updateCellOwners(ArrayList<ArrayList<Pair>> outposts, int influenceDistance) {
+	public void updateCellOwners(int influenceDistance) {
 		for (int outpostId = 0; outpostId < outposts.size(); outpostId++) {
-			for (Pair outpost : outposts.get(outpostId)) {
+			for (Outpost outpost : outposts.get(outpostId)) {
 				ArrayList<GridCell> cellsUnderInfluence = getInfluencedCells(outpost, influenceDistance);
 				for (GridCell cell : cellsUnderInfluence) {
 					int dist = manhattanDist(cell, outpost);
@@ -50,6 +52,25 @@ public class GameBoard {
 				}
 			}
 		}
+	}
+	
+	public int calculateDefensiveScore(Outpost movingPost, Pair testPos, int playerId, Pair homespace) {
+		ArrayList<Outpost> playerOutposts = outposts.get(playerId);
+		int MAX_DIST = 200;
+		int combinedDistances = 0;
+		for (Outpost testPost : playerOutposts) {
+			// we don't want to count the post we're looking to move
+			if (testPost.id == movingPost.id)
+				break;
+			int dist = manhattanDist(testPos, testPost);
+				combinedDistances += (MAX_DIST - dist);
+		}
+		combinedDistances += MAX_DIST - manhattanDist(homespace, testPos);
+		return combinedDistances;
+	}
+	
+	public int calculateOffensiveScore(Outpost movingPost, Pair testPos, int playerId, int influenceDist) {
+		return 0;
 	}
 	
 	public Resource getResources(int id) {
@@ -66,6 +87,10 @@ public class GameBoard {
 		return resourcesToReturn;
 	}
 	
+	public int getResourceVal(Pair pr) {
+		return grid[pr.x][pr.y].value;
+	}
+	
 	private ArrayList<GridCell> getInfluencedCells(Pair center, int influenceDistance) {
 		Pair checkCell;
 		ArrayList<GridCell> influencedCells = new ArrayList<GridCell>();
@@ -80,17 +105,17 @@ public class GameBoard {
 		return influencedCells;
 	}
 	
-	private int manhattanDist(Pair pr1, Pair pr2) {
+	public int manhattanDist(Pair pr1, Pair pr2) {
 		return (Math.abs(pr1.x - pr2.x) + Math.abs(pr1.y - pr2.y));
 	}
 	
-	private boolean validCellForAnalysis(Pair pair) {
+	public boolean validCellForAnalysis(Pair pair) {
 		if (pair.x < 0 || pair.x >= BOARD_SIZE || pair.y < 0 || pair.y >= BOARD_SIZE)
 			return false;
 		else return true;
 	}
 	
-	private boolean validCellForMoving(Pair pair) {
+	public boolean validCellForMoving(Pair pair) {
 		if (!validCellForAnalysis(pair) || grid[pair.x][pair.y].hasWater)
 			return false;
 		return true;
