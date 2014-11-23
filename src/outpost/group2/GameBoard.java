@@ -70,7 +70,7 @@ public class GameBoard {
 					for (int k = 0; k < BOARD_SIZE; k++) {
 						for (int l = 0; l < BOARD_SIZE; l++) {
 							comparisonCell = grid[k][l];
-							if (comparisonCell != currentCell && validCellForAnalysis(comparisonCell) && comparisonCell.hasWater) {
+							if (comparisonCell.owner != id && validCellForAnalysis(comparisonCell) && comparisonCell.hasWater) {
 								currentCell.waterValue += waterMultiplier * (1/ (double)manhattanDist(comparisonCell, currentCell));
 							}
 						}
@@ -113,7 +113,7 @@ public class GameBoard {
 	}
 	
 	public int calculateOffensiveScore(Outpost movingPost, Pair testPos, int playerId, int influenceDist) {
-		return 0;
+		return grid[testPos.x][testPos.y].landValue;
 	}
 	
 	public Resource getResources(int id) {
@@ -140,7 +140,7 @@ public class GameBoard {
 		for (int i = -1 * influenceDistance; i < influenceDistance; i++) {
 			for (int j = -1 * influenceDistance; j < influenceDistance; j++) {
 				checkCell = new Pair(center.x + i, center.y + j);
-				if (validCellForAnalysis(checkCell)) {
+				if (validCellForAnalysis(checkCell) && manhattanDist(checkCell, center) < influenceDistance) {
 					influencedCells.add(grid[center.x+i][center.y+j]);
 				}
 			}
