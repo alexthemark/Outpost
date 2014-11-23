@@ -51,10 +51,10 @@ public class Player extends outpost.sim.Player {
     	try {
 	    	board.updateSupplyLines(homespaces);
 	    	Resource ourResources = board.getResources(this.id); 
-	    	System.out.printf("We have %d water, %d land\n", ourResources.water, ourResources.land);
+	    	System.out.printf("[GROUP2][LOG] We have %d water, %d land at start\n", ourResources.water, ourResources.land);
 	    	int waterMultiplier = calculateResourceMultiplier(outposts.get(id).size(), W, ourResources.water);
 	    	System.out.println("[GROUP2][LOG] Water multiplier: " + waterMultiplier);
-	    	int landMultiplier = 0;//calculateResourceMultiplier(outposts.get(id).size(), L, ourResources.land);
+	    	int landMultiplier = calculateResourceMultiplier(outposts.get(id).size(), L, ourResources.land);
 	    	System.out.println("[GROUP2][LOG] Land multiplier: " + landMultiplier);
 	    	board.calculateResourceValues(this.id, influenceDist, waterMultiplier, landMultiplier);
     	} catch (OwnersNotUpdatedException e) {
@@ -116,7 +116,6 @@ public class Player extends outpost.sim.Player {
 		int START_COLLECTING_OUTPOST_NO = 3;
 		int usedResources = resourceToBuildOutpost * numberOfCurrentOutposts;
 		int freeResources = currentResourceAmount - usedResources;
-		System.out.println("Freesources: " + freeResources);
 		// First, if we have enough of the resource that we can build SAFE_OUTPOST_NO, we don't really need the resource
 		if (freeResources > SAFE_OUTPOST_NO * resourceToBuildOutpost)
 			return 0;

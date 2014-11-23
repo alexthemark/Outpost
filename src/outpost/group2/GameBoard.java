@@ -90,6 +90,8 @@ public class GameBoard {
 						cell.owner = outpostId;
 						cell.distToOutpost = dist;
 					}
+					else if (dist == cell.distToOutpost)
+						cell.owner = -5;
 				}
 			}
 		}
@@ -140,7 +142,7 @@ public class GameBoard {
 		for (int i = -1 * influenceDistance; i < influenceDistance; i++) {
 			for (int j = -1 * influenceDistance; j < influenceDistance; j++) {
 				checkCell = new Pair(center.x + i, center.y + j);
-				if (validCellForAnalysis(checkCell) && manhattanDist(checkCell, center) < influenceDistance) {
+				if (validCellForAnalysis(checkCell) && manhattanDist(checkCell, center) <= influenceDistance) {
 					influencedCells.add(grid[center.x+i][center.y+j]);
 				}
 			}
