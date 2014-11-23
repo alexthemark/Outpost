@@ -52,11 +52,12 @@ public class Player extends outpost.sim.Player {
 	    	board.updateSupplyLines(homespaces);
 	    	Resource ourResources = board.getResources(this.id); 
 	    	int waterMultiplier = calculateResourceMultiplier(outposts.get(id).size(), W, ourResources.water);
-	    	System.out.println("Water multiplier: " + waterMultiplier);
-	    	int landMultiplier = 0;//calculateResourceMultiplier(outposts.get(id).size(), L, ourResources.land);
+	    	System.out.println("[GROUP2][LOG] Water multiplier: " + waterMultiplier);
+	    	int landMultiplier = calculateResourceMultiplier(outposts.get(id).size(), L, ourResources.land);
+	    	System.out.println("[GROUP2][LOG] Land multiplier: " + landMultiplier);
 	    	board.calculateResourceValues(this.id, influenceDist, waterMultiplier, landMultiplier);
     	} catch (OwnersNotUpdatedException e) {
-    		System.out.println("Must updated the owners before calling this function");
+    		System.err.println("[GROUP2][ERROR] Must update the owners before calling this function");
     	}
  
     	// Great, now we know the resource value of each cell. Let's now look at each outpost, and see
@@ -68,10 +69,10 @@ public class Player extends outpost.sim.Player {
     		ArrayList<Pair> surroundingPairs = surroundingPairs(outpost, board);
     		for (Pair testPos : surroundingPairs) {
     			int defensiveVal = board.calculateDefensiveScore(outpost, testPos, id, homespace);
-    			double resourceVal = board.getResourceVal(testPos);
-    			System.out.printf("Resource value: %f\n", resourceVal);
+    			double waterResourceVal = board.getWaterResourceVal(testPos);
+    			double landResourceVal = board.getLandResourceVal(testPos);
     			int offensiveVal = board.calculateOffensiveScore(outpost, testPos, id, influenceDist);
-    			double currentScore = resourceVal + defensiveVal + (currentTick/T) * offensiveVal;
+    			double currentScore = waterResourceVal + landResourceVal + defensiveVal + (currentTick/T) * offensiveVal;
     			if (currentScore > bestScore) {
     				bestScore = currentScore;
     				bestPair = testPos;
@@ -81,7 +82,7 @@ public class Player extends outpost.sim.Player {
     		ourNextMoves.add(thisMove);
     	}
     	long endTime = System.currentTimeMillis();
-    	System.out.println("Took " + (endTime - startTime) + "milliseconds");
+    	System.out.println("[GROUP2][LOG] Took " + (endTime - startTime) + "milliseconds");
     	return ourNextMoves;
 	}
 	

@@ -130,7 +130,7 @@ public class GameBoard {
 		return resourcesToReturn;
 	}
 	
-	public double getResourceVal(Pair pr) {
+	public double getWaterResourceVal(Pair pr) {
 		return grid[pr.x][pr.y].waterValue;
 	}
 	
@@ -166,5 +166,9 @@ public class GameBoard {
 		if (!validCellForAnalysis(pair) || grid[pair.x][pair.y].hasWater)
 			return false;
 		return true;
+	}
+
+	public double getLandResourceVal(Pair pr) {
+		return grid[pr.x][pr.y].landValue;
 	}
 }
