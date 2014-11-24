@@ -35,6 +35,7 @@ public class Player extends outpost.sim.Player {
     	long startTime = System.currentTimeMillis();
 		currentTick++;
 		ArrayList<movePair> ourNextMoves = new ArrayList<movePair>();   
+		ArrayList<Pair> moveSpaces = new ArrayList<Pair>();
 		ArrayList<ArrayList<Outpost>> outposts = new ArrayList<ArrayList<Outpost>>();
 		for (ArrayList<Pair> outpostPairList : outpostPairs) {
 			ArrayList<Outpost> outpostList = new ArrayList<Outpost>();
@@ -50,6 +51,7 @@ public class Player extends outpost.sim.Player {
     	board.updateCellOwners(influenceDist);
     	try {
 	    	board.updateSupplyLines(homespaces);
+	    	//printOutposts(outposts, id);
 	    	Resource ourResources = board.getResources(this.id); 
 	    	System.out.printf("[GROUP2][LOG] We have %d water, %d land at start\n", ourResources.water, ourResources.land);
 	    	int waterMultiplier = calculateResourceMultiplier(outposts.get(id).size(), W, ourResources.water);
@@ -72,14 +74,18 @@ public class Player extends outpost.sim.Player {
     			int defensiveVal = board.calculateDefensiveScore(outpost, testPos, id, homespace);
     			double waterResourceVal = board.getWaterResourceVal(testPos);
     			double landResourceVal = board.getLandResourceVal(testPos);
-    			int offensiveVal = board.calculateOffensiveScore(outpost, testPos, id, influenceDist);
-    			double currentScore = waterResourceVal + landResourceVal + defensiveVal + (currentTick/T) * offensiveVal;
-    			if (currentScore > bestScore) {
+    			int offensiveVal = (int) ((double) currentTick/ (double) T) * board.calculateOffensiveScore(outpost, testPos, id, influenceDist);
+    			double currentScore = waterResourceVal + landResourceVal + defensiveVal +  offensiveVal;
+    			if (currentScore > bestScore && !moveSpaces.contains(bestPair)) {
     				bestScore = currentScore;
     				bestPair = testPos;
+    				System.out.printf("[GROUP2][LOG] Outpost %d has water val %f, "
+    						+ "land val %f, defensive val %d, offensive val %d\n", 
+    						outpostId, waterResourceVal, landResourceVal, defensiveVal, offensiveVal);
     			}
     		}
     		movePair thisMove = new movePair(outpostId, bestPair);
+    		moveSpaces.add(bestPair);
     		ourNextMoves.add(thisMove);
     	}
     	long endTime = System.currentTimeMillis();
@@ -110,6 +116,13 @@ public class Player extends outpost.sim.Player {
 		return surroundingPairs;
 	}
 	
+	private void printOutposts(ArrayList<ArrayList<Outpost>> outposts, int id) {
+		ArrayList<Outpost> releventPosts = outposts.get(id);
+		for (Outpost post : releventPosts) {
+			System.out.printf("Post at %d,%d\n", post.x, post.y);
+		}
+	}
+	
 	// Calculate how much we need a resource at this moment. 
 	private int calculateResourceMultiplier(int numberOfCurrentOutposts, int resourceToBuildOutpost, int currentResourceAmount) {
 		int SAFE_OUTPOST_NO = 5;
@@ -132,7 +145,8 @@ public class Player extends outpost.sim.Player {
     
     // For now, we delete the newest outpost. Future work: 
     public int delete(ArrayList<ArrayList<Pair>> king_outpostlist, Point[] gridin) {
-    	int del = king_outpostlist.get(id).size() - 1;
+    	Random rand = new Random();
+    	int del = rand.nextInt(king_outpostlist.get(id).size());
     	return del;
     }
 }

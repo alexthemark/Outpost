@@ -488,11 +488,14 @@ public class Outpost
 						soil[grid[i].ownerlist.get(f).x]=soil[grid[i].ownerlist.get(f).x]+1/grid[i].ownerlist.size();
 					}
 				}
-
 			}
 		}
 		for (int i=0; i<4; i++) {
-			noutpost[i] = (int) Math.min(soil[i]/L, water[i]/W)+1;
+                        //Richard added the following to ignore resources so I can focus on my strategy
+                        if (L ==0 || W == 0)
+                          noutpost[i] = nrounds; 
+                        else
+                          noutpost[i] = (int) Math.min(soil[i]/L, water[i]/W)+1;
 			if (noutpost[i]>king_outpostlist.get(i).size()) {
 				//System.out.printf("After the calculation, the number of outpost for %d king should increase", i);
 				if (i==0) {
@@ -787,11 +790,13 @@ public class Outpost
 		for (int d=0; d<4; d++) {
 			try {
 				//ArrayList<movePair> nextlist = new ArrayList<movePair>();
-				if (king_outpostlist.get(d).size()>noutpost[d]) {
-					int removedid = players[d].delete(king_outpostlist, grid);
-					king_outpostlist.get(d).remove(removedid);
-					System.err.printf("player %d delete outpost %d\n", d, removedid);
-				}
+                                if (tick % 10 == 0 && tick !=0){
+                                  if (king_outpostlist.get(d).size()>noutpost[d]) {
+                                          int removedid = players[d].delete(king_outpostlist, grid);
+                                          king_outpostlist.get(d).remove(removedid);
+                                          System.err.printf("player %d delete outpost %d\n", d, removedid);
+                                  }
+                                }
 				if (d==0)
 					nextlist0 = players[d].move(king_outpostlist, grid, r_distance, L, W, MAX_TICKS);
 				if (d==1)

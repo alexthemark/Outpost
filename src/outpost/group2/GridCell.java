@@ -13,12 +13,15 @@ public class GridCell extends Pair {
     // Array indexed by player ids
     public boolean[] hasSupplyLine;
 
+    public static final int NO_OWNER = -1;
+    public static final int DISPUTED = -2;
+    
     public GridCell(int xx, int yy, boolean wt) {
         x = xx;
         y = yy;
         hasWater = wt;
         this.waterValue = 0;
-        this.owner = -1;
+        this.owner = NO_OWNER;
         this.distToOutpost = Integer.MAX_VALUE;
         this.hasSupplyLine = new boolean[4];
         for (int i = 0; i < hasSupplyLine.length; i++)
