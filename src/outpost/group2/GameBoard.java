@@ -51,37 +51,33 @@ public class GameBoard {
 	
 	// land value is a 0 - 100 value describing how much land would be gained by moving there.
 	// water value is a heat map getting closer to water.
-	public void calculateResourceValues(int id, int influenceDistance, int waterMultiplier, int landMultiplier) throws OwnersNotUpdatedException {
+	public void calculateResourceValues(ArrayList<Pair> pointsToCheck, int id, int influenceDistance, int waterMultiplier, int landMultiplier) throws OwnersNotUpdatedException {
 		if (!ownersUpdated)
 			throw new OwnersNotUpdatedException();
 		GridCell currentCell;
 		GridCell comparisonCell;
-		for (int i = 0; i < BOARD_SIZE; i++) {
-			for (int j = 0; j < BOARD_SIZE; j++) {
-				currentCell = grid[i][j];
-				if (validCellForMoving(currentCell)) {
-					ArrayList<GridCell> influencedCells = getInfluencedCells(currentCell, influenceDistance);
-					for (GridCell cell : influencedCells) {
-						if (!cell.hasWater && cell.owner != id) {
-							currentCell.landValue++;
-						}
-						else if (!cell.hasWater)
-							currentCell.landValue += .5;
+		for (Pair pair : pointsToCheck) {
+			currentCell = grid[pair.x][pair.y];
+			if (currentCell.visited)
+				continue;
+			if (validCellForMoving(currentCell)) {
+				ArrayList<GridCell> influencedCells = getInfluencedCells(currentCell, influenceDistance);
+				for (GridCell cell : influencedCells) {
+					if (!cell.hasWater && cell.owner != id) {
+						currentCell.landValue++;
 					}
-					currentCell.landValue = (int) (landMultiplier * 100 * ((double) currentCell.landValue/(double) (4*influenceDistance*influenceDistance)));
-					for (int k = 0; k < BOARD_SIZE; k++) {
-						for (int l = 0; l < BOARD_SIZE; l++) {
-							comparisonCell = grid[k][l];
-							if (comparisonCell.owner != id && validCellForAnalysis(comparisonCell) && comparisonCell.hasWater) {
-								currentCell.waterValue += waterMultiplier * (1/ (double)Math.pow(manhattanDist(comparisonCell, currentCell), 2));
-							}
-							else if (comparisonCell.owner == id && validCellForAnalysis(comparisonCell) && comparisonCell.hasWater) {
-								currentCell.waterValue += .5 * waterMultiplier * (1/ (double)Math.pow(manhattanDist(comparisonCell, currentCell), 2));
-							}
+				}
+				currentCell.landValue = (int) (landMultiplier * 100 * ((double) currentCell.landValue/(double) (4*influenceDistance*influenceDistance)));
+				for (int k = 0; k < BOARD_SIZE; k++) {
+					for (int l = 0; l < BOARD_SIZE; l++) {
+						comparisonCell = grid[k][l];
+						if (comparisonCell.owner != id && validCellForAnalysis(comparisonCell) && comparisonCell.hasWater) {
+							currentCell.waterValue += waterMultiplier * (1/ (double)manhattanDist(comparisonCell, currentCell));
 						}
 					}
 				}
 			}
+			currentCell.visited = true;
 		}
 	}
 	
@@ -95,7 +91,7 @@ public class GameBoard {
 						cell.owner = playerId;
 						cell.distToOutpost = dist;
 					}
-					else if (dist == cell.distToOutpost)
+					else if (dist == cell.distToOutpost && cell.owner != playerId)
 						cell.owner = GridCell.DISPUTED;
 				}
 			}
@@ -115,12 +111,12 @@ public class GameBoard {
 			int dist = manhattanDist(testPos, testPost);
 				combinedDistances += (MAX_DIST - dist);
 		}
-		combinedDistances += 5* MAX_DIST - manhattanDist(homespace, testPos);
-		return (int) (combinedDistances/(playerOutposts.size() + 4))/2;
+		combinedDistances += MAX_DIST - manhattanDist(homespace, testPos);
+		return (int) (combinedDistances/(playerOutposts.size()))/2;
 	}
 	
 	public int calculateOffensiveScore(Outpost movingPost, Pair testPos, int playerId, int influenceDist) {
-		return grid[testPos.x][testPos.y].landValue;
+		return 5*grid[testPos.x][testPos.y].landValue;
 	}
 	
 	public Resource getResources(int id) {

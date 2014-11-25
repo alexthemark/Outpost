@@ -58,7 +58,12 @@ public class Player extends outpost.sim.Player {
 	    	System.out.println("[GROUP2][LOG] Water multiplier: " + waterMultiplier);
 	    	int landMultiplier = calculateResourceMultiplier(outposts.get(id).size(), L, ourResources.land);
 	    	System.out.println("[GROUP2][LOG] Land multiplier: " + landMultiplier);
-	    	board.calculateResourceValues(this.id, influenceDist, waterMultiplier, landMultiplier);
+	    	ArrayList<Pair> pairsToCheck = new ArrayList<Pair>();
+	    	for (Pair outpost : outpostPairs.get(id)) {
+	    		pairsToCheck.add(outpost);
+	    		pairsToCheck.addAll(surroundingPairs(outpost, board));
+	    	}
+	    	board.calculateResourceValues(pairsToCheck, this.id, influenceDist, waterMultiplier, landMultiplier);
     	} catch (OwnersNotUpdatedException e) {
     		System.err.println("[GROUP2][ERROR] Must update the owners before calling this function");
     	}
@@ -76,12 +81,10 @@ public class Player extends outpost.sim.Player {
     			double landResourceVal = board.getLandResourceVal(testPos);
     			int offensiveVal = (int) ((double) currentTick/ (double) T) * board.calculateOffensiveScore(outpost, testPos, id, influenceDist);
     			double currentScore = waterResourceVal + landResourceVal + defensiveVal +  offensiveVal;
+    			System.out.printf("Point %d, %d water val: %f, land val: %f, defensive val: %d\n", testPos.x, testPos.y, waterResourceVal, landResourceVal, defensiveVal);
     			if (currentScore > bestScore && !moveSpaces.contains(bestPair)) {
     				bestScore = currentScore;
     				bestPair = testPos;
-    				System.out.printf("[GROUP2][LOG] Outpost %d has water val %f, "
-    						+ "land val %f, defensive val %d, offensive val %d\n", 
-    						outpostId, waterResourceVal, landResourceVal, defensiveVal, offensiveVal);
     			}
     		}
     		movePair thisMove = new movePair(outpostId, bestPair);

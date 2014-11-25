@@ -12,6 +12,7 @@ public class GridCell extends Pair {
     public int distToOutpost;
     // Array indexed by player ids
     public boolean[] hasSupplyLine;
+    public boolean visited;
 
     public static final int NO_OWNER = -1;
     public static final int DISPUTED = -2;
@@ -26,6 +27,7 @@ public class GridCell extends Pair {
         this.hasSupplyLine = new boolean[4];
         for (int i = 0; i < hasSupplyLine.length; i++)
         	hasSupplyLine[i] = false;
+        this.visited = false;
     }
 
     public GridCell(Point o) {
