@@ -60,7 +60,6 @@ public class Player extends outpost.sim.Player {
 	    	System.out.println("[GROUP2][LOG] Land multiplier: " + landMultiplier);
 	    	ArrayList<Pair> pairsToCheck = new ArrayList<Pair>();
 	    	for (Pair outpost : outpostPairs.get(id)) {
-	    		pairsToCheck.add(outpost);
 	    		pairsToCheck.addAll(surroundingPairs(outpost, board));
 	    	}
 	    	board.calculateResourceValues(pairsToCheck, this.id, influenceDist, waterMultiplier, landMultiplier);
@@ -81,7 +80,7 @@ public class Player extends outpost.sim.Player {
     			double landResourceVal = board.getLandResourceVal(testPos);
     			int offensiveVal = (int) ((double) currentTick/ (double) T) * board.calculateOffensiveScore(outpost, testPos, id, influenceDist);
     			double currentScore = waterResourceVal + landResourceVal + defensiveVal +  offensiveVal;
-    			System.out.printf("Point %d, %d water val: %f, land val: %f, defensive val: %d\n", testPos.x, testPos.y, waterResourceVal, landResourceVal, defensiveVal);
+    			//System.out.printf("Point %d, %d water val: %f, land val: %f, defensive val: %d\n", testPos.x, testPos.y, waterResourceVal, landResourceVal, defensiveVal);
     			if (currentScore > bestScore && !moveSpaces.contains(bestPair)) {
     				bestScore = currentScore;
     				bestPair = testPos;
