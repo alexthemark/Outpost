@@ -1,6 +1,8 @@
 package outpost.group2;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 import outpost.sim.Pair;
 import outpost.sim.Point;
@@ -10,6 +12,7 @@ public class GameBoard {
 	GridCell[][] grid = new GridCell[BOARD_SIZE][BOARD_SIZE];
 	// this list is first indexed by the player's id, and then gives their list of outposts.
 	ArrayList<ArrayList<Outpost>> outposts;
+	boolean ownersUpdated;
 	
 	public GameBoard(Point[] oneDimensionalGrid, ArrayList<ArrayList<Outpost>> outposts) {
 		for (int i = 0; i < BOARD_SIZE; i++) {
@@ -18,43 +21,85 @@ public class GameBoard {
 			}
 		}
 		this.outposts = outposts;
+		ownersUpdated = false;
 	}
 	
-	public void calculateResourceValues(int id, int influenceDistance, int waterMultiplier, int landMultiplier) {
-		GridCell currentCell;
-		for (int i = 0; i < BOARD_SIZE; i++) {
-			for (int j = 0; j < BOARD_SIZE; j++) {
-				currentCell = grid[i][j];
-				if (validCellForMoving(currentCell)) {
-					ArrayList<GridCell> cellsUnderInfluence = getInfluencedCells(currentCell, influenceDistance);
-					for (GridCell cell : cellsUnderInfluence) {
-						// We don't count a cell as useful if we already own it. 
-						if (cell.hasWater && cell.owner != id)
-							currentCell.value += waterMultiplier;
-						else if (cell.owner != id)
-							currentCell.value += landMultiplier;
+	public void updateSupplyLines(HashMap<Integer, Pair> homespaces) throws OwnersNotUpdatedException {
+		if (!ownersUpdated)
+			throw new OwnersNotUpdatedException();
+		for (int id = 0; id < homespaces.size(); id++) {
+			Pair startingSpace = homespaces.get(id);
+			LinkedList<Pair> queue = new LinkedList<Pair>();
+			queue.add(startingSpace);
+			int[] cx = {0, 0, 1, -1};
+			int[] cy = {1, -1, 0, 0};
+			while (!queue.isEmpty()) {
+				startingSpace = queue.pop();
+				for (int j = 0; j < cx.length; j++) {
+					if (!validCellForAnalysis(startingSpace.x + cx[j], startingSpace.y + cy[j]))
+						break;
+					GridCell testSpace = grid[startingSpace.x + cx[j]][startingSpace.y + cy[j]];
+					// check if it's ours or available, it's land, and we haven't already marked it as a supply line.
+					if (validCellForMoving(testSpace) && (testSpace.owner == id || testSpace.owner == -1) && !testSpace.hasSupplyLine[id]) {
+						testSpace.hasSupplyLine[id] = true;
+						queue.add(testSpace);
 					}
 				}
 			}
+		}
+	}
+	
+	// land value is a 0 - 100 value describing how much land would be gained by moving there.
+	// water value is a heat map getting closer to water.
+	public void calculateResourceValues(ArrayList<Pair> pointsToCheck, int id, int influenceDistance, int waterMultiplier, int landMultiplier) throws OwnersNotUpdatedException {
+		if (!ownersUpdated)
+			throw new OwnersNotUpdatedException();
+		GridCell currentCell;
+		GridCell comparisonCell;
+		for (Pair pair : pointsToCheck) {
+			currentCell = grid[pair.x][pair.y];
+			if (currentCell.visited)
+				continue;
+			if (validCellForMoving(currentCell)) {
+				ArrayList<GridCell> influencedCells = getInfluencedCells(currentCell, influenceDistance);
+				for (GridCell cell : influencedCells) {
+					if (!cell.hasWater && cell.owner != id) {
+						currentCell.landValue++;
+					}
+				}
+				currentCell.landValue = (int) (landMultiplier * 100 * ((double) currentCell.landValue/(double) (4*influenceDistance*influenceDistance)));
+				for (int k = 0; k < BOARD_SIZE; k++) {
+					for (int l = 0; l < BOARD_SIZE; l++) {
+						comparisonCell = grid[k][l];
+						if (comparisonCell.owner != id && validCellForAnalysis(comparisonCell) && comparisonCell.hasWater) {
+							currentCell.waterValue += waterMultiplier * (1/ (double)manhattanDist(comparisonCell, currentCell));
+						}
+					}
+				}
+			}
+			currentCell.visited = true;
 		}
 	}
 	
 	public void updateCellOwners(int influenceDistance) {
-		for (int outpostId = 0; outpostId < outposts.size(); outpostId++) {
-			for (Outpost outpost : outposts.get(outpostId)) {
+		for (int playerId = 0; playerId < outposts.size(); playerId++) {
+			for (Outpost outpost : outposts.get(playerId)) {
 				ArrayList<GridCell> cellsUnderInfluence = getInfluencedCells(outpost, influenceDistance);
 				for (GridCell cell : cellsUnderInfluence) {
 					int dist = manhattanDist(cell, outpost);
 					if (dist < cell.distToOutpost) {
-						cell.owner = outpostId;
+						cell.owner = playerId;
 						cell.distToOutpost = dist;
 					}
+					else if (dist == cell.distToOutpost && cell.owner != playerId)
+						cell.owner = GridCell.DISPUTED;
 				}
 			}
 		}
+		ownersUpdated = true;
 	}
 	
-	// Returns a number between 0 and 200, where 200 is the best defensive score, and 0 is the worst.
+	// Returns a number between 0 and 100, where 100 is the best defensive score, and 0 is the worst.
 	public int calculateDefensiveScore(Outpost movingPost, Pair testPos, int playerId, Pair homespace) {
 		ArrayList<Outpost> playerOutposts = outposts.get(playerId);
 		int MAX_DIST = 200;
@@ -67,39 +112,40 @@ public class GameBoard {
 				combinedDistances += (MAX_DIST - dist);
 		}
 		combinedDistances += MAX_DIST - manhattanDist(homespace, testPos);
-		return (int) combinedDistances/playerOutposts.size();
+		return (int) (combinedDistances/(playerOutposts.size()))/2;
 	}
 	
 	public int calculateOffensiveScore(Outpost movingPost, Pair testPos, int playerId, int influenceDist) {
-		return 0;
+		return 5*grid[testPos.x][testPos.y].landValue;
 	}
 	
 	public Resource getResources(int id) {
-		Resource resourcesToReturn = new Resource();
+		Resource resourcesToReturn = new Resource(0,0);
 		for (int i = 0; i < BOARD_SIZE; i++) {
 			for (int j = 0; j < BOARD_SIZE; j++) {
 				if (grid[i][j].hasWater && grid[i][j].owner == id) {
 					resourcesToReturn.water++;
 				}
-				else if (grid[i][j].owner == id)
+				else if (grid[i][j].owner == id) {
 					resourcesToReturn.land++;
+				}
 			}
 		}
 		return resourcesToReturn;
 	}
 	
-	public int getResourceVal(Pair pr) {
-		return grid[pr.x][pr.y].value;
+	public double getWaterResourceVal(Pair pr) {
+		return grid[pr.x][pr.y].waterValue;
 	}
 	
 	private ArrayList<GridCell> getInfluencedCells(Pair center, int influenceDistance) {
 		Pair checkCell;
 		ArrayList<GridCell> influencedCells = new ArrayList<GridCell>();
-		for (int i = -1 * influenceDistance; i < influenceDistance; i++) {
-			for (int j = -1 * influenceDistance; j < influenceDistance; j++) {
+		for (int i = -1 * influenceDistance; i <= influenceDistance; i++) {
+			for (int j = -1 * (influenceDistance - Math.abs(i)); j <= influenceDistance - Math.abs(i); j++) {
 				checkCell = new Pair(center.x + i, center.y + j);
 				if (validCellForAnalysis(checkCell)) {
-					influencedCells.add(grid[center.x+i][center.y+j]);
+					influencedCells.add(grid[checkCell.x][checkCell.y]);
 				}
 			}
 		}
@@ -108,6 +154,10 @@ public class GameBoard {
 	
 	public int manhattanDist(Pair pr1, Pair pr2) {
 		return (Math.abs(pr1.x - pr2.x) + Math.abs(pr1.y - pr2.y));
+	}
+	
+	public boolean validCellForAnalysis(int x, int y) {
+		return validCellForAnalysis(new Pair(x,y));
 	}
 	
 	public boolean validCellForAnalysis(Pair pair) {
@@ -120,5 +170,9 @@ public class GameBoard {
 		if (!validCellForAnalysis(pair) || grid[pair.x][pair.y].hasWater)
 			return false;
 		return true;
+	}
+
+	public double getLandResourceVal(Pair pr) {
+		return grid[pr.x][pr.y].landValue;
 	}
 }
