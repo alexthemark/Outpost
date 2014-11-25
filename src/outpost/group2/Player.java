@@ -60,7 +60,6 @@ public class Player extends outpost.sim.Player {
 	    	System.out.println("[GROUP2][LOG] Land multiplier: " + landMultiplier);
 	    	ArrayList<Pair> pairsToCheck = new ArrayList<Pair>();
 	    	for (Pair outpost : outpostPairs.get(id)) {
-	    		pairsToCheck.add(outpost);
 	    		pairsToCheck.addAll(surroundingPairs(outpost, board));
 	    	}
 	    	board.calculateResourceValues(pairsToCheck, this.id, influenceDist, waterMultiplier, landMultiplier);
