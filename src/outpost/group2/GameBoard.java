@@ -100,16 +100,19 @@ public class GameBoard {
 	}
 	
 	// Returns a number between 0 and 100, where 100 is the best defensive score, and 0 is the worst.
-	public int calculateDefensiveScore(Outpost movingPost, Pair testPos, int playerId, Pair homespace) {
+	public int calculateDefensiveScore(Outpost movingPost, Pair testPos, int playerId, Pair homespace, int influence) {
 		ArrayList<Outpost> playerOutposts = outposts.get(playerId);
 		int MAX_DIST = 200;
 		int combinedDistances = 0;
 		for (Outpost testPost : playerOutposts) {
 			// we don't want to count the post we're looking to move
 			if (testPost.id == movingPost.id)
-				break;
+				continue;
 			int dist = manhattanDist(testPos, testPost);
 				combinedDistances += (MAX_DIST - dist);
+			// Penalty for being too close
+			if (dist < influence/3)
+				combinedDistances -= influence/3;
 		}
 		combinedDistances += MAX_DIST - manhattanDist(homespace, testPos);
 		return (int) (combinedDistances/(playerOutposts.size()))/2;
