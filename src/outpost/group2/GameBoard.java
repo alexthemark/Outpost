@@ -130,21 +130,21 @@ public class GameBoard {
 				value++;
 			}
 		}
-		System.out.println("size of intruder: " + intruderList.size());
+		//System.out.println("size of intruder: " + intruderList.size());
 		for(int i = 0; i < intruderList.size(); i++)
 		{
 			if (distance(intruderList.get(i), testPos) < inf_range) {
-				System.out.println("intruder x: " + intruderList.get(i).x + ", y: " + intruderList.get(i).y);
+				//System.out.println("intruder x: " + intruderList.get(i).x + ", y: " + intruderList.get(i).y);
 
 				if (grid[intruderList.get(i).x][ intruderList.get(i).y].owner == GridCell.NO_OWNER) {
-					System.out.println("cell x: " + testPos.x + ", y: " + testPos.y + ", non_owner");
+					//System.out.println("cell x: " + testPos.x + ", y: " + testPos.y + ", non_owner");
 					value += 5 + inf_range - distance(testPos, intruderList.get(i));
 					return value;
 						//System.out.println("neutral res becomes mine!");
 					} 
 						else
 						if (grid[intruderList.get(i).x][ intruderList.get(i).y].owner != playerId) {
-							System.out.println("not owned by our ourself");
+							//System.out.println("not owned by our ourself");
 							if(playerId==0 && (intruderList.get(i).x < dis || intruderList.get(i).y < dis ))
 							{
 								value += 35 + inf_range - distance(testPos, intruderList.get(i));
@@ -152,7 +152,7 @@ public class GameBoard {
 							}
 							if(playerId==1 && (intruderList.get(i).x > BOARD_SIZE-dis || intruderList.get(i).y < dis ))
 									{
-								System.out.println(" booundary");
+								//System.out.println(" booundary");
 
 								value += 35 + inf_range - distance(testPos, intruderList.get(i));
 								return value;
@@ -167,7 +167,7 @@ public class GameBoard {
 										value += 35 + inf_range - distance(testPos, intruderList.get(i));
 										return value;
 									}
-							System.out.println("not booundary");
+							//System.out.println("not booundary");
 
 							value += 25 + inf_range - distance(testPos, intruderList.get(i));
 							return value;
