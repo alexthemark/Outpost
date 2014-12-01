@@ -34,6 +34,7 @@ public class Player extends outpost.sim.Player {
 	public ArrayList<movePair> move(ArrayList<ArrayList<Pair>> outpostPairs, Point[] gridin, int influenceDist, int L, int W, int T){
     	long startTime = System.currentTimeMillis();
 		currentTick++;
+		boolean endGame = T - currentTick < 200;
 		ArrayList<movePair> ourNextMoves = new ArrayList<movePair>();   
 		ArrayList<Pair> moveSpaces = new ArrayList<Pair>();
 		ArrayList<ArrayList<Outpost>> outposts = new ArrayList<ArrayList<Outpost>>();
@@ -57,6 +58,10 @@ public class Player extends outpost.sim.Player {
 	    	int waterMultiplier = calculateResourceMultiplier(outposts.get(id).size(), W, ourResources.water);
 	    	System.out.println("[GROUP2][LOG] Water multiplier: " + waterMultiplier);
 	    	int landMultiplier = calculateResourceMultiplier(outposts.get(id).size(), L, ourResources.land);
+	    	if (endGame) {
+	    		landMultiplier += 1;
+	    		landMultiplier *= 5;
+	    	}
 	    	System.out.println("[GROUP2][LOG] Land multiplier: " + landMultiplier);
 	    	ArrayList<Pair> pairsToCheck = new ArrayList<Pair>();
 	    	for (Pair outpost : outpostPairs.get(id)) {
@@ -75,12 +80,17 @@ public class Player extends outpost.sim.Player {
     		Pair bestPair = new Pair();
     		ArrayList<Pair> surroundingPairs = surroundingPairs(outpost, board);
     		for (Pair testPos : surroundingPairs) {
-    			int defensiveVal = board.calculateDefensiveScore(outpost, testPos, id, homespace);
+    			int defensiveVal = board.calculateDefensiveScore(outpost, testPos, id, homespace, influenceDist);
     			double waterResourceVal = board.getWaterResourceVal(testPos);
     			double landResourceVal = board.getLandResourceVal(testPos);
-    			int offensiveVal = (int) ((double) currentTick/ (double) T) * board.calculateOffensiveScore(outpost, testPos, id, influenceDist);
+    			// add surround opponents' outposts
+    			CalConvexHull cal = new CalConvexHull();
+    			ArrayList<Pair> myConvexHull = cal.getConvexHull(outpostPairs.get(this.id), this.id, BOARD_SIZE);
+    			ArrayList<Pair> intruderList = cal.findIntruder(myConvexHull, outpostPairs, this.id);
+    			
+    			int offensiveVal = 5*(int) /*((double) currentTick/ (double) T) **/ board.calculateOffensiveScore(outpost, testPos, id, influenceDist,intruderList);
     			double currentScore = waterResourceVal + landResourceVal + defensiveVal +  offensiveVal;
-    			//System.out.printf("Point %d, %d water val: %f, land val: %f, defensive val: %d\n", testPos.x, testPos.y, waterResourceVal, landResourceVal, defensiveVal);
+    			//System.out.printf("Point %d, %d water val: %f, land val: %f, defensive val: %d, offensive val: %d\n", testPos.x, testPos.y, waterResourceVal, landResourceVal, defensiveVal,offensiveVal);
     			if (currentScore > bestScore && !moveSpaces.contains(bestPair)) {
     				bestScore = currentScore;
     				bestPair = testPos;
@@ -121,7 +131,7 @@ public class Player extends outpost.sim.Player {
 	private void printOutposts(ArrayList<ArrayList<Outpost>> outposts, int id) {
 		ArrayList<Outpost> releventPosts = outposts.get(id);
 		for (Outpost post : releventPosts) {
-			System.out.printf("Post at %d,%d\n", post.x, post.y);
+			//System.out.printf("Post at %d,%d\n", post.x, post.y);
 		}
 	}
 	

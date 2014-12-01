@@ -246,9 +246,10 @@ public class Outpost
 			else if (e.getSource() == next10)
 				steps = 10;
 			else if (e.getSource() == next50)
-				steps = 50;
+				steps = 5000;
 
 			for (int i = 0; i < steps; ++i) {
+				paintImmediately(0,0, FRAME_SIZE, FRAME_SIZE);
 				if (!performOnce())
 					break;
 			}
@@ -269,7 +270,7 @@ public class Outpost
 			next10 = new JButton("Next10"); 
 			next10.addActionListener(this);
 			next10.setBounds(100, 0, 100, 50);
-			next50 = new JButton("Next50"); 
+			next50 = new JButton("Next5000"); 
 			next50.addActionListener(this);
 			next50.setBounds(200, 0, 100, 50);
 
@@ -488,14 +489,11 @@ public class Outpost
 						soil[grid[i].ownerlist.get(f).x]=soil[grid[i].ownerlist.get(f).x]+1/grid[i].ownerlist.size();
 					}
 				}
+
 			}
 		}
 		for (int i=0; i<4; i++) {
-                        //Richard added the following to ignore resources so I can focus on my strategy
-                        if (L ==0 || W == 0)
-                          noutpost[i] = nrounds; 
-                        else
-                          noutpost[i] = (int) Math.min(soil[i]/L, water[i]/W)+1;
+			noutpost[i] = (int) Math.min(soil[i]/L, water[i]/W)+1;
 			if (noutpost[i]>king_outpostlist.get(i).size()) {
 				//System.out.printf("After the calculation, the number of outpost for %d king should increase", i);
 				if (i==0) {
@@ -619,6 +617,7 @@ public class Outpost
 		// remove outposts in unvisited cells
 		for (int i = king_outpostlist.get(id).size() - 1; i >= 0; --i) {
 			Pair p = king_outpostlist.get(id).get(i);
+			if (p!=target){
 			if (!vst[p.x][p.y]) {
 				//System.out.printf("player %d's outpost (%d, %d) cannot find a supplyline back \n", id, p.x, p.y);
 				//System.out.print(group0);
@@ -645,6 +644,7 @@ public class Outpost
 				toremove.add(new Pair(id, i));
 				//king_outpostlist.get(id).remove(i);
 			}
+		}
 		}
 		return toremove;
 	}
@@ -790,21 +790,22 @@ public class Outpost
 		for (int d=0; d<4; d++) {
 			try {
 				//ArrayList<movePair> nextlist = new ArrayList<movePair>();
-                                if (tick % 10 == 0 && tick !=0){
-                                  if (king_outpostlist.get(d).size()>noutpost[d]) {
-                                          int removedid = players[d].delete(king_outpostlist, grid);
-                                          king_outpostlist.get(d).remove(removedid);
-                                          System.err.printf("player %d delete outpost %d\n", d, removedid);
-                                  }
-                                }
+				//Richard points out this bug
+				if (tick%10==0 && tick !=0){
+				if (king_outpostlist.get(d).size()>noutpost[d]) {
+					int removedid = players[d].delete(king_outpostlist, grid);
+					king_outpostlist.get(d).remove(removedid);
+					System.err.printf("player %d delete outpost %d\n", d, removedid);
+				}
+				}
 				if (d==0)
-					nextlist0 = players[d].move(king_outpostlist, grid, r_distance, L, W, MAX_TICKS);
+					nextlist0 = players[d].move(king_outpostlist, grid, r_distance, L, W, nrounds);
 				if (d==1)
-					nextlist1 = players[d].move(king_outpostlist, grid, r_distance, L, W, MAX_TICKS);
+					nextlist1 = players[d].move(king_outpostlist, grid, r_distance, L, W, nrounds);
 				if (d==2)
-					nextlist2 = players[d].move(king_outpostlist, grid, r_distance, L, W, MAX_TICKS);
+					nextlist2 = players[d].move(king_outpostlist, grid, r_distance, L, W, nrounds);
 				if (d==3)
-					nextlist3 = players[d].move(king_outpostlist, grid, r_distance, L, W, MAX_TICKS);
+					nextlist3 = players[d].move(king_outpostlist, grid, r_distance, L, W, nrounds);
 				/*for (int i=0; i<nextlist.size(); i++) {
 					//movePair next = new movePair();
 					//next = nextlist.get(i);

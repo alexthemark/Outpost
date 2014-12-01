@@ -66,6 +66,9 @@ public class GameBoard {
 					if (!cell.hasWater && cell.owner != id) {
 						currentCell.landValue++;
 					}
+					if (cell.hasWater && cell.owner != id) {
+						currentCell.waterValue++;
+					}
 				}
 				currentCell.landValue = (int) (landMultiplier * 100 * ((double) currentCell.landValue/(double) (4*influenceDistance*influenceDistance)));
 				for (int k = 0; k < BOARD_SIZE; k++) {
@@ -100,23 +103,85 @@ public class GameBoard {
 	}
 	
 	// Returns a number between 0 and 100, where 100 is the best defensive score, and 0 is the worst.
-	public int calculateDefensiveScore(Outpost movingPost, Pair testPos, int playerId, Pair homespace) {
+	public int calculateDefensiveScore(Outpost movingPost, Pair testPos, int playerId, Pair homespace, int influence) {
 		ArrayList<Outpost> playerOutposts = outposts.get(playerId);
 		int MAX_DIST = 200;
 		int combinedDistances = 0;
 		for (Outpost testPost : playerOutposts) {
 			// we don't want to count the post we're looking to move
 			if (testPost.id == movingPost.id)
-				break;
+				continue;
 			int dist = manhattanDist(testPos, testPost);
 				combinedDistances += (MAX_DIST - dist);
+			// Penalty for being too close
+			if (dist < influence/3)
+				combinedDistances -= influence/3;
 		}
 		combinedDistances += MAX_DIST - manhattanDist(homespace, testPos);
 		return (int) (combinedDistances/(playerOutposts.size()))/2;
 	}
 	
-	public int calculateOffensiveScore(Outpost movingPost, Pair testPos, int playerId, int influenceDist) {
-		return 5*grid[testPos.x][testPos.y].landValue;
+	public double distance(Pair a, Pair b) {
+		return Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+	}
+	
+	public double calculateOffensiveScore(Outpost movingPost, Pair testPos, int playerId, int influenceDist,ArrayList<Pair> intruderList) {
+		//return 5*grid[testPos.x][testPos.y].landValue;
+		double dis = influenceDist * 2;
+		double inf_range = 3*2*influenceDist;
+		double value = 0;
+		ArrayList<GridCell> influencedCells = getInfluencedCells(testPos, influenceDist);
+		for (GridCell cell : influencedCells) {
+			if (cell.owner == GridCell.NO_OWNER) {
+				value++;
+			}
+		}
+		//System.out.println("size of intruder: " + intruderList.size());
+		for(int i = 0; i < intruderList.size(); i++)
+		{
+			if (distance(intruderList.get(i), testPos) < inf_range) {
+				//System.out.println("intruder x: " + intruderList.get(i).x + ", y: " + intruderList.get(i).y);
+
+				if (grid[intruderList.get(i).x][ intruderList.get(i).y].owner == GridCell.NO_OWNER) {
+					//System.out.println("cell x: " + testPos.x + ", y: " + testPos.y + ", non_owner");
+					value += 5 + inf_range - distance(testPos, intruderList.get(i));
+					return value;
+						//System.out.println("neutral res becomes mine!");
+					} 
+						else
+						if (grid[intruderList.get(i).x][ intruderList.get(i).y].owner != playerId) {
+							//System.out.println("not owned by our ourself");
+							if(playerId==0 && (intruderList.get(i).x < dis || intruderList.get(i).y < dis ))
+							{
+								value += 35 + inf_range - distance(testPos, intruderList.get(i));
+								return value;
+							}
+							if(playerId==1 && (intruderList.get(i).x > BOARD_SIZE-dis || intruderList.get(i).y < dis ))
+									{
+								//System.out.println(" booundary");
+
+								value += 35 + inf_range - distance(testPos, intruderList.get(i));
+								return value;
+									}
+							if(playerId==3 && (intruderList.get(i).x < dis || intruderList.get(i).y > BOARD_SIZE-dis ))
+									{
+								value += 35 + inf_range - distance(testPos, intruderList.get(i));
+								return value;
+									}
+							if(playerId==2 && (intruderList.get(i).x > BOARD_SIZE -dis || intruderList.get(i).y > BOARD_SIZE-dis ))
+									{
+										value += 35 + inf_range - distance(testPos, intruderList.get(i));
+										return value;
+									}
+							//System.out.println("not booundary");
+
+							value += 25 + inf_range - distance(testPos, intruderList.get(i));
+							return value;
+					}
+				}
+			}
+		
+		return value;
 	}
 	
 	public Resource getResources(int id) {
