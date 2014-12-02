@@ -74,7 +74,7 @@ public class GameBoard {
 				for (int k = 0; k < BOARD_SIZE; k++) {
 					for (int l = 0; l < BOARD_SIZE; l++) {
 						comparisonCell = grid[k][l];
-						if (comparisonCell.owner != id && validCellForAnalysis(comparisonCell) && comparisonCell.hasWater) {
+						if (comparisonCell.owner != id && validCellForAnalysis(comparisonCell) && comparisonCell.hasWater && waterReachable(comparisonCell, influenceDistance)) {
 							currentCell.waterValue += waterMultiplier * (1/ (double)manhattanDist(comparisonCell, currentCell));
 						}
 					}
@@ -112,10 +112,11 @@ public class GameBoard {
 			if (testPost.id == movingPost.id)
 				continue;
 			int dist = manhattanDist(testPos, testPost);
+			if (dist > influence/2)
 				combinedDistances += (MAX_DIST - dist);
 			// Penalty for being too close
-			if (dist < influence/3)
-				combinedDistances -= influence/3;
+			if (dist < influence/2)
+				combinedDistances -= (influence - dist) * (influence - dist) * (influence - dist) * (influence - dist);
 		}
 		combinedDistances += MAX_DIST - manhattanDist(homespace, testPos);
 		return (int) (combinedDistances/(playerOutposts.size()))/2;
@@ -215,6 +216,15 @@ public class GameBoard {
 			}
 		}
 		return influencedCells;
+	}
+	
+	private boolean waterReachable(GridCell waterCell, int influenceDist) {
+		ArrayList<GridCell> influencingCells = getInfluencedCells(waterCell, influenceDist);
+		for (GridCell cell : influencingCells) {
+			if (!cell.hasWater)
+				return true;
+		}
+		return false;
 	}
 	
 	public int manhattanDist(Pair pr1, Pair pr2) {

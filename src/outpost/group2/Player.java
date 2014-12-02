@@ -20,7 +20,7 @@ public class Player extends outpost.sim.Player {
 	public void init() {
 		homespaces.put(0, new Pair(0,0));
 		homespaces.put(1, new Pair(BOARD_SIZE - 1,0));
-		homespaces.put(2, new Pair(BOARD_SIZE -1, BOARD_SIZE -1));
+		homespaces.put(2, new Pair(BOARD_SIZE - 1, BOARD_SIZE -1));
 		homespaces.put(3, new Pair(0, BOARD_SIZE -1));
 		homespace = homespaces.get(id);
 		currentTick = 0;
@@ -77,7 +77,8 @@ public class Player extends outpost.sim.Player {
     	for (int outpostId = 0; outpostId < outposts.get(id).size(); outpostId++) {
     		Outpost outpost = outposts.get(id).get(outpostId);
     		double bestScore = 0;
-    		Pair bestPair = new Pair();
+    		Pair bestPair = new Pair(outpost);
+    		moveSpaces.add(outpost);
     		ArrayList<Pair> surroundingPairs = surroundingPairs(outpost, board);
     		for (Pair testPos : surroundingPairs) {
     			int defensiveVal = board.calculateDefensiveScore(outpost, testPos, id, homespace, influenceDist);
@@ -88,10 +89,10 @@ public class Player extends outpost.sim.Player {
     			ArrayList<Pair> myConvexHull = cal.getConvexHull(outpostPairs.get(this.id), this.id, BOARD_SIZE);
     			ArrayList<Pair> intruderList = cal.findIntruder(myConvexHull, outpostPairs, this.id);
     			
-    			int offensiveVal = 5*(int) /*((double) currentTick/ (double) T) **/ board.calculateOffensiveScore(outpost, testPos, id, influenceDist,intruderList);
-    			double currentScore = waterResourceVal + landResourceVal + defensiveVal +  offensiveVal;
+    			int offensiveVal = 5*(int) board.calculateOffensiveScore(outpost, testPos, id, influenceDist,intruderList);
+    			double currentScore = defensiveVal + waterResourceVal + landResourceVal + offensiveVal;
     			//System.out.printf("Point %d, %d water val: %f, land val: %f, defensive val: %d, offensive val: %d\n", testPos.x, testPos.y, waterResourceVal, landResourceVal, defensiveVal,offensiveVal);
-    			if (currentScore > bestScore && !moveSpaces.contains(bestPair)) {
+    			if (currentScore >= bestScore && !moveSpaces.contains(bestPair)) {
     				bestScore = currentScore;
     				bestPair = testPos;
     			}

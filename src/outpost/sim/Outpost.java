@@ -60,6 +60,10 @@ public class Outpost
 	static String group1 = null;
 	static String group2 = null;
 	static String group3 = null;
+	static String map = null;
+	static String gameName;
+	
+	static StringBuffer logFileString = new StringBuffer();
 	
 	static ArrayList<ArrayList<Pair>> king_outpostlist = new ArrayList<ArrayList<Pair>>();
 
@@ -215,7 +219,20 @@ public class Outpost
 				label2.setForeground(Color.BLACK);
 				label2.setVisible(true);
 					//System.err.printf("Player %d control water %f, land %f\n", i, water[i], soil[i]);
-				
+				// Write the log to a file
+				BufferedWriter out = null;
+				String logFileName = map + L + W+  "_" + group0 + "_" + group1 + "_" + group2 + "_" + group3 + "_results_log.csv";
+				try  
+				{
+				    FileWriter fstream = new FileWriter(logFileName, true);
+				    out = new BufferedWriter(fstream);
+				    out.write(logFileString.toString());
+				    out.close();
+				}
+				catch (IOException e)
+				{
+				    System.err.println("Could not write log file.");
+				}
 				return false;
 			}
 			else {
@@ -792,11 +809,11 @@ public class Outpost
 				//ArrayList<movePair> nextlist = new ArrayList<movePair>();
 				//Richard points out this bug
 				if (tick%10==0 && tick !=0){
-				if (king_outpostlist.get(d).size()>noutpost[d]) {
-					int removedid = players[d].delete(king_outpostlist, grid);
-					king_outpostlist.get(d).remove(removedid);
-					System.err.printf("player %d delete outpost %d\n", d, removedid);
-				}
+					if (king_outpostlist.get(d).size()>noutpost[d]) {
+						int removedid = players[d].delete(king_outpostlist, grid);
+						king_outpostlist.get(d).remove(removedid);
+						System.err.printf("player %d delete outpost %d\n", d, removedid);
+					}
 				}
 				if (d==0)
 					nextlist0 = players[d].move(king_outpostlist, grid, r_distance, L, W, nrounds);
@@ -891,6 +908,21 @@ public class Outpost
 		updatemap(nextlist1, 1);
 		updatemap(nextlist2, 2);
 		updatemap(nextlist3, 3);
+		if (tick % 10 == 0) {
+			for (int d = 0; d < players.length; d++) {
+				String player = null;
+				if (d == 0)
+					player = group0;
+				if (d == 1)
+					player = group1;
+				if (d == 2)
+					player = group2;
+				if (d == 3)
+					player = group3;
+				String logLine = String.format("%s, %s, %d, %d, %s, %d, %f, %f, %d\n", gameName, map, L, W, player, tick, soil[d], water[d], king_outpostlist.get(d).size());
+				logFileString.append(logLine);
+			}
+		}
 	/*	if (tick == nrounds) {
 			calculateres();
 			for (int i=0; i<4; i++) {
@@ -983,7 +1015,7 @@ public class Outpost
 	public static void main(String[] args) throws Exception
 	{
 		// game parameters
-		String map = null;
+		
 
 
 		if (args.length > 0)
@@ -1008,6 +1040,7 @@ public class Outpost
 			nrounds = Integer.parseInt(args[9]);
 		// load players
 
+		gameName = map + L + W+  "_" + group0 + "_" + group1 + "_" + group2 + "_" + group3;
 		players[0] = loadPlayer(group0, 0);
 		players[0].init();
 		players[1] = loadPlayer(group1, 1);
